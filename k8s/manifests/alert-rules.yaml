@@ -1,0 +1,93 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: infraguard-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+    app: kube-prometheus-stack
+spec:
+  groups:
+  - name: infraguard.rules
+    rules:
+    # High Memory Usage Alert
+    - alert: HighMemoryUsage
+      expr: |
+        (
+          container_memory_usage_bytes{namespace="demo-apps", container!=""}
+          / container_spec_memory_limit_bytes{namespace="demo-apps", container!=""}
+        ) > 0.8
+      for: 1m
+      labels:
+        severity: warning
+        team: infraguard
+      annotations:
+        summary: "High memory usage detected"
+        description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+        runbook: "Check for memory leaks, consider increasing limits"
+
+    # High CPU Usage Alert
+    - alert: HighCPUUsage
+      expr: |
+        (
+          rate(container_cpu_usage_seconds_total{namespace="demo-apps", container!=""}[5m])
+          / container_spec_cpu_quota{namespace="demo-apps", container!=""} * 100000
+        ) > 0.8
+      for: 2m
+      labels:
+        severity: warning
+        team: infraguard
+      annotations:
+        summary: "High CPU usage detected"
+        description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using high CPU"
+
+    # Pod Crash Loop Alert
+    - alert: PodCrashLooping
+      expr: |
+        rate(kube_pod_container_status_restarts_total{namespace="demo-apps"}[15m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        team: infraguard
+      annotations:
+        summary: "Pod is crash looping"
+        description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently"
+        runbook: "Check pod logs: kubectl logs {{ $labels.pod }} -n {{ $labels.namespace }}"
+
+    # Pod Not Ready Alert
+    - alert: PodNotReady
+      expr: |
+        kube_pod_status_ready{namespace="demo-apps", condition="true"} == 0
+      for: 2m
+      labels:
+        severity: warning
+        team: infraguard
+      annotations:
+        summary: "Pod not ready"
+        description: "Pod {{ $labels.pod }} has been not ready for more than 2 minutes"
+
+    # Deployment Replicas Mismatch
+    - alert: DeploymentReplicasMismatch
+      expr: |
+        kube_deployment_spec_replicas{namespace="demo-apps"}
+        != kube_deployment_status_replicas_available{namespace="demo-apps"}
+      for: 5m
+      labels:
+        severity: warning
+        team: infraguard
+      annotations:
+        summary: "Deployment replicas mismatch"
+        description: "Deployment {{ $labels.deployment }} has {{ $value }} available replicas, expected {{ $labels.spec_replicas }}"
+
+    # OOMKilled Alert
+    - alert: ContainerOOMKilled
+      expr: |
+        kube_pod_container_status_last_terminated_reason{namespace="demo-apps", reason="OOMKilled"} == 1
+      for: 0m
+      labels:
+        severity: critical
+        team: infraguard
+      annotations:
+        summary: "Container was OOMKilled"
+        description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was killed due to OOM"
+        runbook: "Increase memory limits or fix memory leak"
