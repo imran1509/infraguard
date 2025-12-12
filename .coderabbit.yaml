@@ -1,0 +1,80 @@
+# CodeRabbit Configuration for InfraGuard
+# https://docs.coderabbit.ai/configuration
+
+language: en-US
+
+reviews:
+  # Enable auto-review on all PRs
+  auto_review:
+    enabled: true
+    base_branches:
+      - main
+      - develop
+    
+  # Review profile
+  profile: assertive  # Options: chill, assertive, or a custom prompt
+  
+  # High-level summary in PR comments
+  high_level_summary: true
+  
+  # Poem in review (fun touch for hackathon!)
+  poem: true
+  
+  # Review status in PR title
+  review_status: true
+  
+  # Collapse walkthrough after a certain number of files
+  collapse_walkthrough: 5
+  
+  # Path-specific instructions
+  path_instructions:
+    - path: "k8s/**"
+      instructions: |
+        Review Kubernetes manifests for:
+        - Resource limits and requests (must be set)
+        - Security contexts
+        - Liveness and readiness probes
+        - Label conventions
+        - YAML formatting
+        
+    - path: "kestra/**"
+      instructions: |
+        Review Kestra workflows for:
+        - Proper error handling
+        - Input validation
+        - Secret management (no hardcoded secrets)
+        - Task dependencies
+        
+    - path: "scripts/**/*.py"
+      instructions: |
+        Review Python scripts for:
+        - Type hints usage
+        - Error handling
+        - Security issues (injection, etc.)
+        - Code efficiency
+        
+    - path: "dashboard/**"
+      instructions: |
+        Review dashboard code for:
+        - React best practices
+        - Accessibility (a11y)
+        - Performance optimization
+        - TypeScript types
+        - Tailwind CSS usage
+        
+    - path: "*.md"
+      instructions: |
+        Review documentation for:
+        - Clarity and completeness
+        - Correct formatting
+        - Up-to-date information
+        - Spelling and grammar
+
+chat:
+  # Enable chat in PR comments
+  auto_reply: true
+
+# Knowledge base (optional)
+knowledge_base:
+  learnings:
+    scope: auto
