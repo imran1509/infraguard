@@ -1,0 +1,48 @@
+# InfraGuard - Cline Custom Instructions
+
+## Project Context
+This is InfraGuard, an AI-powered infrastructure incident response system.
+
+## Tech Stack
+- Kubernetes (Minikube for local dev)
+- Prometheus + Grafana for monitoring
+- Kestra for workflow orchestration
+- Python for scripts and APIs
+- Next.js + React for dashboard (Vercel deployment)
+
+## Code Style
+- Python: Use type hints, follow PEP 8
+- TypeScript/React: Use functional components, Tailwind CSS
+- YAML: Follow Kubernetes conventions
+- Always add meaningful comments
+
+## When Fixing Incidents
+When asked to fix an infrastructure incident:
+
+1. First, understand the incident by reading the provided metrics/logs
+2. Identify the root cause
+3. Generate a fix that is:
+   - Minimal and targeted
+   - Safe to apply (won't cause more damage)
+   - Well-documented with comments
+4. For Kubernetes issues:
+   - Prefer patching over full replacement
+   - Always specify resource limits
+   - Use proper labels and annotations
+5. For code issues:
+   - Create a git branch: `fix/incident-{description}`
+   - Make atomic commits
+   - Include tests when possible
+
+## File Locations
+- K8s manifests: `k8s/manifests/`
+- Kestra workflows: `kestra/workflows/`
+- Python scripts: `scripts/`
+- Dashboard: `dashboard/`
+- Documentation: `docs/`
+
+## Remediation Patterns
+- Memory leak: Increase limits + identify leak source
+- CPU spike: Scale horizontally + optimize code
+- Crash loop: Check logs, fix config, rollback if needed
+- Scaling issues: Adjust HPA or manual replicas
