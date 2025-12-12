@@ -1,0 +1,39 @@
+id: collect-metrics
+namespace: infraguard
+description: Collect metrics from Prometheus and monitoring systems
+
+tasks:
+  - id: fetch_metrics
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/metrics/summary"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+  - id: fetch_alerts
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/alerts/active"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+  - id: fetch_incidents
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/incidents/detect"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+outputs:
+  - id: metrics_data
+    type: STRING
+    value: "{{ outputs.fetch_metrics.body ?? '{}' }}"
+  - id: alerts_data
+    type: STRING
+    value: "{{ outputs.fetch_alerts.body ?? '{}' }}"
+  - id: incidents_data
+    type: STRING
+    value: "{{ outputs.fetch_incidents.body ?? '{}' }}"

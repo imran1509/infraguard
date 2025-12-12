@@ -1,0 +1,49 @@
+id: incident-response
+namespace: infraguard
+description: Main incident response orchestrator
+
+tasks:
+  - id: fetch_incidents
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/incidents/detect"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+  - id: fetch_metrics
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/metrics/summary"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+  - id: fetch_alerts
+    type: io.kestra.plugin.core.http.Request
+    uri: "http://host.docker.internal:5000/api/alerts/active"
+    method: GET
+    contentType: application/json
+    timeout: PT30S
+    allowFailed: true
+
+  - id: ai_analysis
+    type: io.kestra.plugin.core.flow.Subflow
+    flowId: ai-agent-bedrock
+    namespace: infraguard
+    inputs:
+      metrics_data: "{{ outputs.fetch_metrics.body ?? '{}' }}"
+      alerts_data: "{{ outputs.fetch_alerts.body ?? '{}' }}"
+      incidents_data: "{{ outputs.fetch_incidents.body ?? '{}' }}"
+    wait: true
+
+  - id: log_results
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      === InfraGuard Analysis Complete ===
+      AI Analysis: {{ outputs.ai_analysis.outputs.analysis ?? 'No analysis available' }}
+
+outputs:
+  - id: analysis
+    type: STRING
+    value: "{{ outputs.ai_analysis.outputs.analysis ?? 'No analysis' }}"
